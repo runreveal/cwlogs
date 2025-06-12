@@ -103,6 +103,7 @@ func (c *CloudwatchLogsReader) pumpEvents(ctx context.Context, eventChan chan<- 
 
 	if c.streamPrefix != "" {
 		streams, err := c.getLogStreams()
+		fmt.Println(streams)
 		if err != nil {
 			c.error = err
 			close(eventChan)
@@ -196,6 +197,7 @@ func (c *CloudwatchLogsReader) getLogStreams() ([]*cloudwatchlogs.LogStream, err
 	streams := []*cloudwatchlogs.LogStream{}
 	if err := c.svc.DescribeLogStreamsPages(params, func(o *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
 		pastWindow := false
+		//fmt.Println(o.LogStreams)
 		for _, s := range o.LogStreams {
 			if len(streams) >= MaxStreams {
 				return false
@@ -210,12 +212,15 @@ func (c *CloudwatchLogsReader) getLogStreams() ([]*cloudwatchlogs.LogStream, err
 			if sortByTime {
 
 				if s.CreationTime != nil && *s.CreationTime > endTimestamp {
+					//fmt.Println("one")
 					continue
 				}
 				if *s.LastEventTimestamp < startTimestamp {
+					//fmt.Println("two")
 					pastWindow = true
 					break
 				}
+				//fmt.Println("three")
 				streams = append(streams, s)
 
 			} else {

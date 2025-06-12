@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/segmentio/cwlogs/lib"
+	"github.com/runreveal/cwlogs/lib"
 	"github.com/segmentio/events"
 	"github.com/spf13/cobra"
 )
 
 const (
 	verboseFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} {{- range $key, $value := .DataFlat }} {{ printf "%v=%v" $key $value }} {{end}} {{- if gt (len .Info.Errors) 0 }} Errors=[{{- range $value := .Info.Errors }} Type={{ printf "%s" $value.Type }} Error={{ printf "%s" $value.Error }} {{ if $value.Stack }} Stack={{printf "%v" $value.Stack}} {{- end }}{{- end }}] {{ end }} - {{ .Message }}`
-	defaultFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} - {{ .Message }}`
+	defaultFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} - {{ .Message }} {{ .DataFlat }}`
 	rawFormatString     = `{{ .PrettyPrint }}`
 )
 
