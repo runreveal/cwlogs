@@ -1,6 +1,6 @@
 package main
 
-import "github.com/segmentio/cwlogs/cmd"
+import "github.com/runreveal/cwlogs/cmd"
 
 func main() {
 	cmd.Execute()

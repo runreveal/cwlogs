@@ -22,7 +22,7 @@ var TaskUUIDPattern = regexp.MustCompile(`^[[:alnum:]]{8}-[[:alnum:]]{4}-[[:alnu
 
 // Event represents a log event
 type Event struct {
-	ecslogs.Event
+	SlogEvent
 	Stream       string
 	Group        string
 	ID           string
@@ -30,11 +30,85 @@ type Event struct {
 	CreationTime time.Time
 }
 
+type SlogEvent struct {
+	Level   ecslogs.Level     `json:"level"`
+	Time    time.Time         `json:"time"`
+	Source  SourceInfo        `json:"source"`
+	Message string            `json:"msg"`
+	Data    map[string]string `json:"-"`
+}
+
+type SourceInfo struct {
+	Function string `json:"function"`
+	File     string `json:"file"`
+	Line     int    `json:"line"`
+}
+
+func (s *SlogEvent) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	if levelData, ok := raw["level"]; ok {
+		if err := json.Unmarshal(levelData, &s.Level); err != nil {
+			return err
+		}
+	}
+
+	if timeData, ok := raw["time"]; ok {
+		if err := json.Unmarshal(timeData, &s.Time); err != nil {
+			return err
+		}
+	}
+
+	if sourceData, ok := raw["source"]; ok {
+		if err := json.Unmarshal(sourceData, &s.Source); err != nil {
+			return err
+		}
+	}
+
+	if msgData, ok := raw["msg"]; ok {
+		if err := json.Unmarshal(msgData, &s.Message); err != nil {
+			return err
+		}
+	}
+
+	s.Data = make(map[string]string)
+	staticFields := map[string]bool{
+		"level":  true,
+		"time":   true,
+		"source": true,
+		"msg":    true,
+	}
+
+	for key, value := range raw {
+		if !staticFields[key] {
+			var str string
+			if err := json.Unmarshal(value, &str); err != nil {
+				var num json.Number
+				if err := json.Unmarshal(value, &num); err != nil {
+					s.Data[key] = string(value)
+				} else {
+					s.Data[key] = string(num)
+				}
+			} else {
+				s.Data[key] = str
+			}
+		}
+	}
+
+	return nil
+}
+
 // NewEvent takes a cloudwatch log event and returns an Event
 func NewEvent(cwEvent cloudwatchlogs.FilteredLogEvent, group string) Event {
-	var ecsLogsEvent ecslogs.Event
+	var ecsLogsEvent SlogEvent
 	if err := json.Unmarshal([]byte(*cwEvent.Message), &ecsLogsEvent); err != nil {
-		ecsLogsEvent = ecslogs.MakeEvent(ecslogs.INFO, *cwEvent.Message)
+		ecsLogsEvent = SlogEvent{
+			Level:   ecslogs.INFO,
+			Message: *cwEvent.Message,
+		}
 	}
 
 	// If time was not found use AWS Timestamp
@@ -43,7 +117,7 @@ func NewEvent(cwEvent cloudwatchlogs.FilteredLogEvent, group string) Event {
 	}
 
 	return Event{
-		Event:        ecsLogsEvent,
+		SlogEvent:        ecsLogsEvent,
 		Stream:       *cwEvent.LogStreamName,
 		Group:        group,
 		ID:           *cwEvent.EventId,

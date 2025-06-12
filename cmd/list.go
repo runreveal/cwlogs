@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/segmentio/cwlogs/lib"
+	"github.com/runreveal/cwlogs/lib"
 	"github.com/spf13/cobra"
 )
 
