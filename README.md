@@ -4,15 +4,15 @@ Simple CLI for viewing cloudwatch logs
 
 ## Installing
 
-To install:
+To install, after cloning this repository:
 
 ```bash
-$ go get github.com/segmentio/cwlogs
+$ go install
 ```
 
 ## Authenticating
 
-Using `cwlogs` requires you to be running in an environment with an authenticated AWS user which has read access to your logs.  The easiest way to do so is by using `aws-vault`, like:
+Using `cwlogs` requires you to be running in an environment with an authenticated AWS user which has read access to your logs.  The easiest way to do so is by using [`aws-vault`](https://github.com/99designs/aws-vault), like:
 
 ```bash
 $ aws-vault exec prod -- cwlogs
